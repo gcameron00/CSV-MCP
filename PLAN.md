@@ -83,7 +83,7 @@ Files to create:
     - Uses `newline=''` and `encoding='utf-8'` to avoid platform line-ending issues (Windows)
     - Returns the written path
   - `delete_rows(filename, col, op, value) -> Path`
-    - Calls `filter_rows` with the inverted operator to get surviving rows
+    - Calls `engine.fetch_all()` directly with a NOT condition to get surviving rows (no `max_rows` cap — this is a disk operation, not a client response)
     - Passes result to `write_file` with the same filename
     - Original is only overwritten when the same filename is given — caller's explicit choice
 
@@ -163,7 +163,7 @@ Each phase is independently testable before the next begins.
 ## Cross-platform notes (Windows 11 + macOS)
 
 - **CSV writing**: always `open(path, 'w', newline='', encoding='utf-8')` — prevents double `\r\n` on Windows
-- **stdio binary mode**: set at startup in `__main__.py` before the MCP SDK takes over stdin/stdout
+- **stdio binary mode**: handled internally by the MCP SDK's `stdio_server` (opens `sys.stdin.buffer` / `sys.stdout.buffer`); no manual setup needed
 - **Paths**: `pathlib.Path` throughout, no string concatenation or hardcoded separators
 - **watchdog**: uses `ReadDirectoryChangesW` on Windows, `FSEvents` on macOS — no code differences needed, but macOS may have a short delay on first event
 

@@ -40,7 +40,7 @@ Returns a lightweight payload sufficient for the model to reason about a file wi
 
 | Field | Description |
 |---|---|
-| `columns` | Column names and inferred types |
+| `schema` | List of `{column, type}` objects |
 | `row_count` | Total number of data rows |
 | `sample` | First 5 rows |
 
@@ -57,7 +57,7 @@ Returns a lightweight payload sufficient for the model to reason about a file wi
 | `query` | `filename`, `sql` | Runs a SQL query via DuckDB directly against the CSV file — no full file load into memory. The most powerful read tool. |
 | `get_stats` | `filename` | Returns min, max, mean, and null count for each column. |
 | `filter_rows` | `filename`, `col`, `op`, `value` | Convenience wrapper for simple equality/comparison filters. Use `query` for anything more complex. |
-| `merge_files` | `filename_a`, `filename_b`, `how` | Join or concatenate two CSV files. `how` supports `concat`, `inner`, `left`, `right`. |
+| `merge_files` | `filename_a`, `filename_b`, `how`, `on` (optional) | Join or concatenate two CSV files. `how` supports `concat`, `inner`, `left`, `right`. `on` is the join key column and is required for anything other than `concat`. |
 
 ### Write tools
 
@@ -72,22 +72,29 @@ Write tools have side effects and are visually separated in the architecture. Bo
 
 ## Server configuration
 
-Configured at startup, either via environment variables or a config file:
+Configured via `config.toml` in the repo root. Set the `CSV_MCP_CONFIG` environment variable to point at an alternate path.
+
+```toml
+[server]
+watch_dir = "data/csvs"
+allowed_extensions = [".csv"]
+max_rows = 1000
+```
 
 | Key | Description | Default |
 |---|---|---|
-| `watch_dir` | Directory to monitor for CSV files | `./data/csvs` |
+| `watch_dir` | Directory to monitor for CSV files | `data/csvs` |
 | `allowed_extensions` | File extensions treated as CSVs | `[".csv"]` |
-| `max_rows` | Row limit for query results returned to the client | `1000` |
+| `max_rows` | Hard row cap for query results returned to the client | `1000` |
 
 ---
 
 ## Transport
 
-| Mode | Use case |
-|---|---|
-| `stdio` | Local use — launch the server as a subprocess from an MCP client config (e.g. Claude Desktop) |
-| `HTTP+SSE` | Remote or multi-client use — server runs independently and clients connect over HTTP |
+| Mode | Status | Use case |
+|---|---|---|
+| `stdio` | Implemented | Local use — launch the server as a subprocess from an MCP client config (e.g. Claude Desktop) |
+| `HTTP+SSE` | v2 | Remote or multi-client use — server runs independently and clients connect over HTTP |
 
 ---
 
@@ -102,7 +109,7 @@ Configured at startup, either via environment variables or a config file:
 ### Install
 
 ```bash
-uv sync
+uv sync --dev
 ```
 
 ### Run (stdio)
@@ -150,14 +157,17 @@ These are v2 territory once the core read/write loop is solid.
 CSV-MCP/
 ├── csv_mcp/
 │   ├── __main__.py       # entry point
-│   ├── server.py         # MCP server setup, resource handlers
-│   ├── watcher.py        # filesystem watcher
+│   ├── server.py         # MCP server wiring — tools, resources, notification loop
+│   ├── resources.py      # list_resources, read_resource business logic
+│   ├── watcher.py        # filesystem watcher (watchdog), fires on_change callback
+│   ├── engine.py         # DuckDB wrapper — only file that touches DuckDB
 │   ├── tools/
 │   │   ├── read.py       # get_schema, get_sample, query, get_stats, filter_rows, merge_files
 │   │   └── write.py      # write_file, delete_rows
-│   └── config.py         # startup configuration
+│   └── config.py         # loads config.toml → Settings dataclass
 ├── data/
 │   └── csvs/             # default watched directory
 ├── tests/
+├── config.toml           # server configuration
 └── pyproject.toml
 ```

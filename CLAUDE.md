@@ -8,6 +8,8 @@ A Python MCP server that exposes CSV files as resources and tools to MCP clients
 
 - **Resources are lightweight**: `resources/read` returns schema + row count + 5 sample rows only. Do not change this to return full file contents.
 - **DuckDB queries are memory-safe**: `query` runs SQL directly against files on disk. Don't replace this with pandas `read_csv` or similar in-memory approaches.
+- **DuckDB DDL cannot use `?` parameters**: `CREATE VIEW ... FROM read_csv_auto(?)` raises a `BinderException`. Paths must be embedded as escaped string literals — see `engine._q()`. This applies to any DDL statement.
+- **`fetch_all` bypasses `max_rows`**: Internal write operations (e.g. `delete_rows`) use `engine.fetch_all()` which has no row cap. `max_rows` is a client-response limit only, not a constraint on disk operations.
 - **Write tools are explicit**: `delete_rows` is non-destructive by default — it must pass through `write_file` to persist. Keep this two-step pattern.
 - **Filesystem watcher is authoritative**: `resources/list` is rebuilt dynamically on every call from the watched directory. Don't cache the file list.
 - **`max_rows` is a hard cap**: Query results returned to the client must respect this limit. Don't silently return more rows.
