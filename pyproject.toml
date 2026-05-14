@@ -1,0 +1,23 @@
+[project]
+name = "csv-mcp"
+version = "0.1.0"
+description = "MCP server for working with CSV files"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]",
+    "duckdb",
+    "watchdog",
+]
+
+[dependency-groups]
+dev = ["pytest"]
+
+[project.scripts]
+csv-mcp = "csv_mcp.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

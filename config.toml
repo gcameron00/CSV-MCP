@@ -1,0 +1,4 @@
+[server]
+watch_dir = "data/csvs"
+allowed_extensions = [".csv"]
+max_rows = 1000
