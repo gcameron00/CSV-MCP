@@ -2,9 +2,14 @@ import duckdb
 from pathlib import Path
 
 
+def _q(path: Path) -> str:
+    """Escape a path for embedding in a DuckDB string literal."""
+    return str(path).replace("'", "''")
+
+
 def _connect(path: Path) -> duckdb.DuckDBPyConnection:
     con = duckdb.connect()
-    con.execute("CREATE VIEW data AS SELECT * FROM read_csv_auto(?)", [str(path)])
+    con.execute(f"CREATE VIEW data AS SELECT * FROM read_csv_auto('{_q(path)}')")
     return con
 
 
@@ -18,8 +23,8 @@ def run_query(path: Path, sql: str, max_rows: int, params: list | None = None) -
 
 def merge(path_a: Path, path_b: Path, how: str, on: str | None, max_rows: int) -> list[dict]:
     con = duckdb.connect()
-    con.execute("CREATE VIEW a AS SELECT * FROM read_csv_auto(?)", [str(path_a)])
-    con.execute("CREATE VIEW b AS SELECT * FROM read_csv_auto(?)", [str(path_b)])
+    con.execute(f"CREATE VIEW a AS SELECT * FROM read_csv_auto('{_q(path_a)}')")
+    con.execute(f"CREATE VIEW b AS SELECT * FROM read_csv_auto('{_q(path_b)}')")
 
     if how == "concat":
         sql = "SELECT * FROM a UNION ALL SELECT * FROM b"
