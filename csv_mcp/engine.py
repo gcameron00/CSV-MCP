@@ -38,6 +38,14 @@ def merge(path_a: Path, path_b: Path, how: str, on: str | None, max_rows: int) -
     return [dict(zip(columns, row)) for row in rows]
 
 
+def fetch_all(path: Path, sql: str, params: list | None = None) -> list[dict]:
+    """Fetch every matching row — no max_rows cap. For internal write operations only."""
+    with _connect(path) as con:
+        rel = con.execute(sql, params or [])
+        columns = [desc[0] for desc in rel.description]
+        return [dict(zip(columns, row)) for row in rel.fetchall()]
+
+
 def get_schema(path: Path) -> list[dict]:
     with _connect(path) as con:
         rel = con.execute("DESCRIBE SELECT * FROM data")
