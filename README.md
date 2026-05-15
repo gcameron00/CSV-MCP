@@ -65,8 +65,8 @@ Write tools have side effects and are visually separated in the architecture. Bo
 
 | Tool | Inputs | Description |
 |---|---|---|
-| `write_file` | `filename`, `data` | Saves data (e.g. a query result) to disk. If the filename is new, the filesystem watcher will detect it and push a `list_changed` notification. |
-| `delete_rows` | `filename`, `col`, `op`, `value` | Filters out matching rows and passes the result to `write_file`. Non-destructive by default — the original is only overwritten when you explicitly pass the same filename back. |
+| `write_file` | `filename`, `data` | Overwrites `filename` with the provided rows. If the filename is new, the watcher pushes a `list_changed` notification. **Destructive — replaces the entire file.** |
+| `delete_rows` | `filename`, `col`, `op`, `value` | Removes matching rows and writes the survivors back to the same file. **Destructive — overwrites the original in place.** |
 
 ---
 
