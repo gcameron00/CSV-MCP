@@ -66,6 +66,7 @@ Write tools have side effects and are visually separated in the architecture. Bo
 | Tool | Inputs | Description |
 |---|---|---|
 | `write_file` | `filename`, `data` | Overwrites `filename` with the provided rows. If the filename is new, the watcher pushes a `list_changed` notification. **Destructive — replaces the entire file.** |
+| `append_rows` | `filename`, `data` | Appends rows to an existing file without touching existing content. Creates the file if it doesn't exist. |
 | `delete_rows` | `filename`, `col`, `op`, `value` | Removes matching rows and writes the survivors back to the same file. **Destructive — overwrites the original in place.** |
 
 ---

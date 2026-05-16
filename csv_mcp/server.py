@@ -158,6 +158,18 @@ async def handle_list_tools() -> list[types.Tool]:
                 "required": ["filename", "col", "op", "value"],
             },
         ),
+        types.Tool(
+            name="append_rows",
+            description="Append rows to an existing CSV file without overwriting it. Creates the file if it does not exist.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "filename": {"type": "string"},
+                    "data": {"type": "array", "items": {"type": "object"}},
+                },
+                "required": ["filename", "data"],
+            },
+        ),
     ]
 
 
@@ -188,6 +200,9 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.T
                 arguments["how"],
                 arguments.get("on"),
             )
+        case "append_rows":
+            path = write_tools.append_rows(arguments["filename"], arguments["data"])
+            result = {"written": str(path)}
         case "write_file":
             path = write_tools.write_file(arguments["filename"], arguments["data"])
             result = {"written": str(path)}

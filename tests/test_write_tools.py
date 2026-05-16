@@ -57,3 +57,35 @@ def test_delete_rows_preserves_all_columns(tmp_csv_dir):
 def test_delete_rows_invalid_op(tmp_csv_dir):
     with pytest.raises(ValueError):
         write_tools.delete_rows("people.csv", "city", "INVALID", "London")
+
+
+def test_append_rows_to_existing(tmp_csv_dir):
+    new_rows = [{"name": "Diana", "age": "28", "city": "Paris"}]
+    write_tools.append_rows("people.csv", new_rows)
+    with open(tmp_csv_dir / "people.csv", newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    assert len(rows) == 4
+    assert rows[-1]["name"] == "Diana"
+
+
+def test_append_rows_creates_file(tmp_csv_dir):
+    data = [{"x": "1"}, {"x": "2"}]
+    path = write_tools.append_rows("new.csv", data)
+    assert path.exists()
+    with open(path, newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    assert len(rows) == 2
+
+
+def test_append_rows_no_duplicate_header(tmp_csv_dir):
+    row = [{"name": "Diana", "age": "28", "city": "Paris"}]
+    write_tools.append_rows("people.csv", row)
+    write_tools.append_rows("people.csv", row)
+    raw = (tmp_csv_dir / "people.csv").read_text(encoding="utf-8")
+    assert raw.count("name,age,city") == 1
+
+
+def test_append_rows_empty_noop(tmp_csv_dir):
+    original = (tmp_csv_dir / "people.csv").read_bytes()
+    write_tools.append_rows("people.csv", [])
+    assert (tmp_csv_dir / "people.csv").read_bytes() == original
